@@ -1030,11 +1030,6 @@ func applyDatabasesConfig(fc *FileConfig, cfg *service.Config) error {
 			}
 		}
 
-		tlsMode, err := service.NewTLSMode(database.TLS.Mode)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-
 		db := service.Database{
 			Name:          database.Name,
 			Description:   database.Description,
@@ -1045,7 +1040,7 @@ func applyDatabasesConfig(fc *FileConfig, cfg *service.Config) error {
 			TLS: service.DatabaseTLS{
 				CACert:     caBytes,
 				ServerName: database.TLS.ServerName,
-				Mode:       tlsMode,
+				Mode:       service.TLSMode(database.TLS.Mode),
 			},
 			AWS: service.DatabaseAWS{
 				Region: database.AWS.Region,
@@ -1591,7 +1586,7 @@ func Configure(clf *CommandLineFlags, cfg *service.Config) error {
 		}
 		var caBytes []byte
 		if clf.DatabaseCACertFile != "" {
-			caBytes, err = ioutil.ReadFile(clf.DatabaseCACertFile)
+			caBytes, err = os.ReadFile(clf.DatabaseCACertFile)
 			if err != nil {
 				return trace.Wrap(err)
 			}
