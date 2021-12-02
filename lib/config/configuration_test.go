@@ -1857,6 +1857,9 @@ func TestDatabaseCLIFlags(t *testing.T) {
 						Command: []string{"hostname"},
 					},
 				},
+				TLS: service.DatabaseTLS{
+					CACert: fixtures.LocalhostCert,
+				},
 			},
 		},
 		{
@@ -1903,6 +1906,9 @@ func TestDatabaseCLIFlags(t *testing.T) {
 				StaticLabels: map[string]string{
 					types.OriginLabel: types.OriginConfigFile},
 				DynamicLabels: services.CommandLabels{},
+				TLS: service.DatabaseTLS{
+					Mode: service.VerifyFull,
+				},
 			},
 		},
 		{
@@ -1927,6 +1933,9 @@ func TestDatabaseCLIFlags(t *testing.T) {
 				StaticLabels: map[string]string{
 					types.OriginLabel: types.OriginConfigFile},
 				DynamicLabels: services.CommandLabels{},
+				TLS: service.DatabaseTLS{
+					Mode: service.VerifyFull,
+				},
 			},
 		},
 		{
@@ -1944,6 +1953,7 @@ func TestDatabaseCLIFlags(t *testing.T) {
 				Protocol: defaults.ProtocolPostgres,
 				URI:      "localhost:5432",
 				TLS: service.DatabaseTLS{
+					Mode:   service.VerifyFull,
 					CACert: fixtures.LocalhostCert,
 				},
 				GCP: service.DatabaseGCP{
