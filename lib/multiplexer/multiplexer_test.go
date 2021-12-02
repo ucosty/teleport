@@ -71,6 +71,8 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
+			EnableSSH:           true,
+			EnableTLS:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -146,6 +148,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
+			EnableTLS:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -198,6 +201,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: false,
+			EnableTLS:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -249,6 +253,7 @@ func TestMux(t *testing.T) {
 			Listener:            listener,
 			ReadDeadline:        time.Millisecond,
 			EnableProxyProtocol: true,
+			EnableTLS:           true,
 		}
 		mux, err := New(config)
 		require.Nil(t, err)
@@ -317,7 +322,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
-			DisableSSH:          true,
+			EnableTLS:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -370,7 +375,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
-			DisableTLS:          true,
+			EnableSSH:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -437,6 +442,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
+			EnableTLS:           true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()
@@ -531,6 +537,7 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Context:  ctx,
 			Listener: listener,
+			EnableDB: true,
 		})
 		require.NoError(t, err)
 		go mux.Serve()
@@ -561,6 +568,8 @@ func TestMux(t *testing.T) {
 		mux, err := New(Config{
 			Listener:            listener,
 			EnableProxyProtocol: true,
+			EnableTLS:           true,
+			EnableDB:            true,
 		})
 		require.Nil(t, err)
 		go mux.Serve()

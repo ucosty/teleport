@@ -1337,6 +1337,7 @@ func (process *TeleportProcess) initAuthService() error {
 		EnableProxyProtocol: cfg.Auth.EnableProxyProtocol,
 		Listener:            listener,
 		ID:                  teleport.Component(process.id),
+		EnableTLS:           true,
 	})
 	if err != nil {
 		listener.Close()
@@ -2615,9 +2616,9 @@ func (process *TeleportProcess) setupProxyListeners() (*proxyListeners, error) {
 		listeners.mux, err = multiplexer.New(multiplexer.Config{
 			EnableProxyProtocol: cfg.Proxy.EnableProxyProtocol,
 			Listener:            listener,
-			DisableTLS:          cfg.Proxy.DisableWebService,
-			DisableSSH:          cfg.Proxy.DisableReverseTunnel,
-			DisableDB:           cfg.Proxy.DisableDatabaseProxy,
+			EnableTLS:           !cfg.Proxy.DisableWebService,
+			EnableSSH:           !cfg.Proxy.DisableReverseTunnel,
+			EnableDB:            !cfg.Proxy.DisableDatabaseProxy,
 			ID:                  teleport.Component(teleport.ComponentProxy, "tunnel", "web", process.id),
 		})
 		if err != nil {
@@ -2638,9 +2639,8 @@ func (process *TeleportProcess) setupProxyListeners() (*proxyListeners, error) {
 		listeners.mux, err = multiplexer.New(multiplexer.Config{
 			EnableProxyProtocol: cfg.Proxy.EnableProxyProtocol,
 			Listener:            listener,
-			DisableTLS:          false,
-			DisableSSH:          true,
-			DisableDB:           cfg.Proxy.DisableDatabaseProxy,
+			EnableTLS:           true,
+			EnableDB:            !cfg.Proxy.DisableDatabaseProxy,
 			ID:                  teleport.Component(teleport.ComponentProxy, "web", process.id),
 		})
 		if err != nil {
@@ -2682,9 +2682,9 @@ func (process *TeleportProcess) setupProxyListeners() (*proxyListeners, error) {
 				listeners.mux, err = multiplexer.New(multiplexer.Config{
 					EnableProxyProtocol: cfg.Proxy.EnableProxyProtocol,
 					Listener:            listener,
-					DisableTLS:          false, // Web service is enabled or we wouldn't have gotten here.
-					DisableSSH:          true,  // Reverse tunnel is on a separate listener created above.
-					DisableDB:           false, // Database proxy is enabled or we wouldn't have gotten here.
+					EnableTLS:           true,  // Web service is enabled or we wouldn't have gotten here.
+					EnableSSH:           false, // Reverse tunnel is on a separate listener created above.
+					EnableDB:            true,  // Database proxy is enabled or we wouldn't have gotten here.
 					ID:                  teleport.Component(teleport.ComponentProxy, "web", process.id),
 				})
 				if err != nil {
