@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -390,12 +391,47 @@ func needRelogin(cf *CLIConf, tc *client.TeleportClient, database *tlsca.RouteTo
 	if !found {
 		return true, nil
 	}
+
+	// For database protocols where database username is encoded in client certificate like Mongo
+	// check if the command line dbUser matches the encoded username in database certificate.
+	userChanged, err := dbUserHasChanged(cf, database, profile.DatabaseCertPath(database.ServiceName))
+	if err != nil {
+		return false, trace.Wrap(err)
+	}
+	if userChanged {
+		return true, nil
+	}
+
 	// Call API and check is a user needs to use MFA to connect to the database.
 	mfaRequired, err := isMFADatabaseAccessRequired(cf, tc, database)
 	if err != nil {
 		return false, trace.Wrap(err)
 	}
 	return mfaRequired, nil
+}
+
+// dbUserHasChanged  checks if cf.DatabaseUser username matches the username in the database certificate.
+func dbUserHasChanged(cf *CLIConf, database *tlsca.RouteToDatabase, certPath string) (bool, error) {
+	if database.Protocol != defaults.ProtocolMongoDB {
+		return false, nil
+	}
+	if cf.DatabaseUser == "" {
+		return false, nil
+	}
+
+	buff, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return false, trace.Wrap(err)
+	}
+	cert, err := tlsca.ParseCertificatePEM(buff)
+	if err != nil {
+		return false, trace.Wrap(err)
+	}
+	identity, err := tlsca.FromSubject(cert.Subject, cert.NotAfter)
+	if err != nil {
+		return false, trace.Wrap(err)
+	}
+	return identity.RouteToDatabase.Username != cf.DatabaseUser, nil
 }
 
 // isMFADatabaseAccessRequired calls the IsMFARequired endpoint in order to get from user roles if access to the database
