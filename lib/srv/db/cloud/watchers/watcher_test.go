@@ -44,7 +44,7 @@ func TestWatcher(t *testing.T) {
 	rdsInstance3, _ := makeRDSInstance(t, "instance-3", "us-east-1", map[string]string{"env": "dev"})
 
 	auroraCluster1, auroraDatabase1 := makeRDSCluster(t, "cluster-1", "us-east-1", map[string]string{"env": "prod"})
-	auroraCluster2, auroraDatabase2 := makeRDSCluster(t, "cluster-2", "us-east-2", map[string]string{"env": "dev"})
+	auroraCluster2, auroraDatabase2, auroraDatabase2Reader := makeRDSClusterWithReader(t, "cluster-2", "us-east-2", map[string]string{"env": "dev"})
 	auroraCluster3, _ := makeRDSCluster(t, "cluster-3", "us-east-2", map[string]string{"env": "prod"})
 
 	watcher, err := NewWatcher(ctx, WatcherConfig{
@@ -79,7 +79,7 @@ func TestWatcher(t *testing.T) {
 	select {
 	case databases := <-watcher.DatabasesC():
 		require.Equal(t, types.Databases{
-			rdsDatabase1, auroraDatabase1, auroraDatabase2}, databases)
+			rdsDatabase1, auroraDatabase1, auroraDatabase2, auroraDatabase2Reader}, databases)
 	case <-time.After(time.Second):
 		t.Fatal("didn't receive databases after 1 second")
 	}
@@ -115,6 +115,25 @@ func makeRDSCluster(t *testing.T, name, region string, labels map[string]string)
 	database, err := services.NewDatabaseFromRDSCluster(cluster)
 	require.NoError(t, err)
 	return cluster, database
+}
+
+func makeRDSClusterWithReader(t *testing.T, name, region string, labels map[string]string) (*rds.DBCluster, types.Database, types.Database) {
+	cluster := &rds.DBCluster{
+		DBClusterArn:        aws.String(fmt.Sprintf("arn:aws:rds:%v:1234567890:cluster:%v", region, name)),
+		DBClusterIdentifier: aws.String(name),
+		DbClusterResourceId: aws.String(uuid.New()),
+		Engine:              aws.String(services.RDSEngineAuroraMySQL),
+		Endpoint:            aws.String("localhost"),
+		ReaderEndpoint:      aws.String("reader.host"),
+		Port:                aws.Int64(3306),
+		TagList:             labelsToTags(labels),
+	}
+	database, err := services.NewDatabaseFromRDSCluster(cluster)
+	require.NoError(t, err)
+
+	readerDatabaase, err := services.NewDatabaseFromRDSClusterReader(cluster)
+	require.NoError(t, err)
+	return cluster, database, readerDatabaase
 }
 
 func labelsToTags(labels map[string]string) (tags []*rds.Tag) {

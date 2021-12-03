@@ -122,6 +122,7 @@ func TestDatabaseFromRDSInstance(t *testing.T) {
 			labelRegion:        "us-west-1",
 			labelEngine:        RDSEnginePostgres,
 			labelEngineVersion: "13.0",
+			labelEndpointType:  "instance",
 			"key":              "val",
 		},
 	}, types.DatabaseSpecV3{
@@ -169,6 +170,7 @@ func TestDatabaseFromRDSCluster(t *testing.T) {
 			labelRegion:        "us-east-1",
 			labelEngine:        RDSEngineAuroraMySQL,
 			labelEngineVersion: "8.0.0",
+			labelEndpointType:  "primary",
 			"key":              "val",
 		},
 	}, types.DatabaseSpecV3{
@@ -186,6 +188,54 @@ func TestDatabaseFromRDSCluster(t *testing.T) {
 	})
 	require.NoError(t, err)
 	actual, err := NewDatabaseFromRDSCluster(cluster)
+	require.NoError(t, err)
+	require.Equal(t, expected, actual)
+}
+
+// TestDatabaseFromRDSClusterReader tests converting an RDS cluster reader endpoint to a database resource.
+func TestDatabaseFromRDSClusterReader(t *testing.T) {
+	cluster := &rds.DBCluster{
+		DBClusterArn:                     aws.String("arn:aws:rds:us-east-1:1234567890:cluster:cluster-1"),
+		DBClusterIdentifier:              aws.String("cluster-1"),
+		DbClusterResourceId:              aws.String("resource-1"),
+		IAMDatabaseAuthenticationEnabled: aws.Bool(true),
+		Engine:                           aws.String(RDSEngineAuroraMySQL),
+		EngineVersion:                    aws.String("8.0.0"),
+		Endpoint:                         aws.String("localhost"),
+		ReaderEndpoint:                   aws.String("reader.host"),
+		Port:                             aws.Int64(3306),
+		TagList: []*rds.Tag{{
+			Key:   aws.String("key"),
+			Value: aws.String("val"),
+		}},
+	}
+	expected, err := types.NewDatabaseV3(types.Metadata{
+		Name:        "cluster-1-reader",
+		Description: "Aurora cluster in us-east-1 (reader endpoint)",
+		Labels: map[string]string{
+			types.OriginLabel:  types.OriginCloud,
+			labelAccountID:     "1234567890",
+			labelRegion:        "us-east-1",
+			labelEngine:        RDSEngineAuroraMySQL,
+			labelEngineVersion: "8.0.0",
+			labelEndpointType:  "reader",
+			"key":              "val",
+		},
+	}, types.DatabaseSpecV3{
+		Protocol: defaults.ProtocolMySQL,
+		URI:      "reader.host:3306",
+		AWS: types.AWS{
+			AccountID: "1234567890",
+			Region:    "us-east-1",
+			RDS: types.RDS{
+				ClusterID:  "cluster-1",
+				ResourceID: "resource-1",
+				IAMAuth:    true,
+			},
+		},
+	})
+	require.NoError(t, err)
+	actual, err := NewDatabaseFromRDSClusterReader(cluster)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
