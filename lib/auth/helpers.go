@@ -317,6 +317,13 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		return nil, trace.Wrap(err)
 	}
 	if err = srv.AuthServer.UpsertCertAuthority(suite.NewTestCAWithConfig(suite.TestCAConfig{
+		Type:        types.DatabaseCA,
+		ClusterName: srv.ClusterName,
+		Clock:       cfg.Clock,
+	})); err != nil {
+		return nil, trace.Wrap(err)
+	}
+	if err = srv.AuthServer.UpsertCertAuthority(suite.NewTestCAWithConfig(suite.TestCAConfig{
 		Type:        types.JWTSigner,
 		ClusterName: srv.ClusterName,
 		Clock:       cfg.Clock,
@@ -485,6 +492,17 @@ func (a *TestAuthServer) Clock() clockwork.Clock {
 func (a *TestAuthServer) Trust(remote *TestAuthServer, roleMap types.RoleMap) error {
 	remoteCA, err := remote.AuthServer.GetCertAuthority(types.CertAuthID{
 		Type:       types.HostCA,
+		DomainName: remote.ClusterName,
+	}, false)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	err = a.AuthServer.UpsertCertAuthority(remoteCA)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	remoteCA, err = remote.AuthServer.GetCertAuthority(types.CertAuthID{
+		Type:       types.DatabaseCA,
 		DomainName: remote.ClusterName,
 	}, false)
 	if err != nil {

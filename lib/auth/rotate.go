@@ -62,9 +62,11 @@ type RotateRequest struct {
 func (r *RotateRequest) Types() []types.CertAuthType {
 	switch r.Type {
 	case "":
-		return []types.CertAuthType{types.HostCA, types.UserCA, types.JWTSigner}
+		return []types.CertAuthType{types.HostCA, types.UserCA, types.DatabaseCA, types.JWTSigner}
 	case types.HostCA:
 		return []types.CertAuthType{types.HostCA}
+	case types.DatabaseCA:
+		return []types.CertAuthType{types.DatabaseCA}
 	case types.UserCA:
 		return []types.CertAuthType{types.UserCA}
 	case types.JWTSigner:
@@ -76,7 +78,7 @@ func (r *RotateRequest) Types() []types.CertAuthType {
 // CheckAndSetDefaults checks and sets default values.
 func (r *RotateRequest) CheckAndSetDefaults(clock clockwork.Clock) error {
 	if r.TargetPhase == "" {
-		// if phase if not set, imply that the first meaningful phase
+		// if phase is not set, imply that the first meaningful phase
 		// is set as a target phase
 		r.TargetPhase = types.RotationPhaseInit
 	}
@@ -85,7 +87,7 @@ func (r *RotateRequest) CheckAndSetDefaults(clock clockwork.Clock) error {
 		r.Mode = types.RotationModeManual
 	}
 	switch r.Type {
-	case "", types.HostCA, types.UserCA, types.JWTSigner:
+	case "", types.HostCA, types.DatabaseCA, types.UserCA, types.JWTSigner:
 	default:
 		return trace.BadParameter("unsupported certificate authority type: %q", r.Type)
 	}
@@ -107,7 +109,7 @@ func (r *RotateRequest) CheckAndSetDefaults(clock clockwork.Clock) error {
 	return nil
 }
 
-// rotationReq is an internal rotation requrest
+// rotationReq is an internal rotation request
 type rotationReq struct {
 	// clock implements test or real wall clock
 	clock clockwork.Clock
@@ -176,7 +178,7 @@ type rotationReq struct {
 // the newly issued CA is no longer used, but set up as trusted,
 // so components can reload and receive credentials issued by "old" CA back.
 // This phase is useful when administrator makes a mistake, or there are some
-// offline components that will loose the connection in case if rotation
+// offline components that will lose the connection in case if rotation
 // completes. It is only possible to transition from this phase to "Standby".
 // When transitioning to "Standby" phase from "Rollback" phase, all components
 // reload again, but the "new" CA is discarded and is no longer trusted,
