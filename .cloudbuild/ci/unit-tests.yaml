@@ -3,8 +3,6 @@ steps:
     id: unit-test
     env:
       - TELEPORT_ETCD_TEST="yes"
-    volumes:
-      - 
     entrypoint: '/bin/bash'
     args: 
       - '-c'
