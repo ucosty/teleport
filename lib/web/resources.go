@@ -105,6 +105,79 @@ func upsertRole(ctx context.Context, clt resourcesAPIGetter, content, httpMethod
 	return ui.NewResourceItem(role)
 }
 
+func (h *Handler) getOIDCConnectorsHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return getOIDCConnectors(r.Context(), clt)
+}
+
+func getOIDCConnectors(ctx context.Context, clt resourcesAPIGetter) ([]ui.ResourceItem, error) {
+	connectors, err := clt.GetOIDCConnectors(ctx, true)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return ui.NewOIDCConnectors(connectors)
+}
+
+func (h *Handler) deleteOIDCConnector(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	connectorName := params.ByName("name")
+	if err := clt.DeleteOIDCConnector(r.Context(), connectorName); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return OK(), nil
+}
+
+func (h *Handler) upsertOIDCConnectorHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	var req ui.ResourceItem
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return upsertOIDCConnector(r.Context(), clt, req.Content, r.Method)
+}
+
+func upsertOIDCConnector(ctx context.Context, clt resourcesAPIGetter, content, httpMethod string) (*ui.ResourceItem, error) {
+	extractedRes, err := ExtractResourceAndValidate(content)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if extractedRes.Kind != types.KindOIDCConnector {
+		return nil, trace.BadParameter("resource kind %q is invalid", extractedRes.Kind)
+	}
+
+	_, err = clt.GetOIDCConnector(ctx, extractedRes.Metadata.Name, false)
+	if err := CheckResourceUpsertableByError(err, httpMethod, extractedRes.Metadata.Name); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	connector, err := services.UnmarshalOIDCConnector(extractedRes.Raw)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if err := clt.UpsertOIDCConnector(ctx, connector); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return ui.NewResourceItem(connector)
+}
+
 func (h *Handler) getGithubConnectorsHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
 	clt, err := ctx.GetClient()
 	if err != nil {
@@ -295,6 +368,14 @@ type resourcesAPIGetter interface {
 	GetRoles(ctx context.Context) ([]types.Role, error)
 	// UpsertRole creates or updates role
 	UpsertRole(ctx context.Context, role types.Role) error
+	// UpsertOIDCConnector creates or updates a OIDC connector
+	UpsertOIDCConnector(ctx context.Context, connector types.OIDCConnector) error
+	// GetOIDCConnectors returns all configured OIDC connectors
+	GetOIDCConnectors(ctx context.Context, withSecrets bool) ([]types.OIDCConnector, error)
+	// GetOIDCConnector returns the specified OIDC connector
+	GetOIDCConnector(ctx context.Context, id string, withSecrets bool) (types.OIDCConnector, error)
+	// DeleteOIDCConnector deletes the specified OIDC connector
+	DeleteOIDCConnector(ctx context.Context, id string) error
 	// UpsertGithubConnector creates or updates a Github connector
 	UpsertGithubConnector(ctx context.Context, connector types.GithubConnector) error
 	// GetGithubConnectors returns all configured Github connectors
