@@ -404,6 +404,11 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*WebAPIHandler, error) {
 	h.POST("/webapi/oidc", h.WithAuth(h.upsertOIDCConnectorHandle))
 	h.DELETE("/webapi/oidc/:name", h.WithAuth(h.deleteOIDCConnector))
 
+	h.GET("/webapi/saml", h.WithAuth(h.getSAMLConnectorsHandle))
+	h.PUT("/webapi/saml", h.WithAuth(h.upsertSAMLConnectorHandle))
+	h.POST("/webapi/saml", h.WithAuth(h.upsertSAMLConnectorHandle))
+	h.DELETE("/webapi/saml/:name", h.WithAuth(h.deleteSAMLConnector))
+
 	h.GET("/webapi/trustedcluster", h.WithAuth(h.getTrustedClustersHandle))
 	h.PUT("/webapi/trustedcluster", h.WithAuth(h.upsertTrustedClusterHandle))
 	h.POST("/webapi/trustedcluster", h.WithAuth(h.upsertTrustedClusterHandle))

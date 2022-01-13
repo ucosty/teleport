@@ -178,6 +178,79 @@ func upsertOIDCConnector(ctx context.Context, clt resourcesAPIGetter, content, h
 	return ui.NewResourceItem(connector)
 }
 
+func (h *Handler) getSAMLConnectorsHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return getSAMLConnectors(r.Context(), clt)
+}
+
+func getSAMLConnectors(ctx context.Context, clt resourcesAPIGetter) ([]ui.ResourceItem, error) {
+	connectors, err := clt.GetSAMLConnectors(ctx, true)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return ui.NewSAMLConnectors(connectors)
+}
+
+func (h *Handler) deleteSAMLConnector(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	connectorName := params.ByName("name")
+	if err := clt.DeleteSAMLConnector(r.Context(), connectorName); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return OK(), nil
+}
+
+func (h *Handler) upsertSAMLConnectorHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	var req ui.ResourceItem
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return upsertSAMLConnector(r.Context(), clt, req.Content, r.Method)
+}
+
+func upsertSAMLConnector(ctx context.Context, clt resourcesAPIGetter, content, httpMethod string) (*ui.ResourceItem, error) {
+	extractedRes, err := ExtractResourceAndValidate(content)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if extractedRes.Kind != types.KindSAMLConnector {
+		return nil, trace.BadParameter("resource kind %q is invalid", extractedRes.Kind)
+	}
+
+	_, err = clt.GetSAMLConnector(ctx, extractedRes.Metadata.Name, false)
+	if err := CheckResourceUpsertableByError(err, httpMethod, extractedRes.Metadata.Name); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	connector, err := services.UnmarshalSAMLConnector(extractedRes.Raw)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if err := clt.UpsertSAMLConnector(ctx, connector); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return ui.NewResourceItem(connector)
+}
+
 func (h *Handler) getGithubConnectorsHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
 	clt, err := ctx.GetClient()
 	if err != nil {
@@ -376,6 +449,14 @@ type resourcesAPIGetter interface {
 	GetOIDCConnector(ctx context.Context, id string, withSecrets bool) (types.OIDCConnector, error)
 	// DeleteOIDCConnector deletes the specified OIDC connector
 	DeleteOIDCConnector(ctx context.Context, id string) error
+	// UpsertSAMLConnector creates or updates a SAML connector
+	UpsertSAMLConnector(ctx context.Context, connector types.SAMLConnector) error
+	// GetSAMLConnectors returns all configured SAML connectors
+	GetSAMLConnectors(ctx context.Context, withSecrets bool) ([]types.SAMLConnector, error)
+	// GetSAMLConnector returns the specified SAML connector
+	GetSAMLConnector(ctx context.Context, id string, withSecrets bool) (types.SAMLConnector, error)
+	// DeleteSAMLConnector deletes the specified SAML connector
+	DeleteSAMLConnector(ctx context.Context, id string) error
 	// UpsertGithubConnector creates or updates a Github connector
 	UpsertGithubConnector(ctx context.Context, connector types.GithubConnector) error
 	// GetGithubConnectors returns all configured Github connectors
