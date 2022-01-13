@@ -147,10 +147,15 @@ func (p *defaultModules) PrintVersion() {
 // Features returns supported features
 func (p *defaultModules) Features() Features {
 	return Features{
-		Kubernetes: true,
-		DB:         true,
-		App:        true,
-		Desktop:    true,
+		Kubernetes:              true,
+		App:                     true,
+		DB:                      true,
+		OIDC:                    true,
+		SAML:                    true,
+		AccessControls:          true,
+		AdvancedAccessWorkflows: true,
+		HSM:                     true,
+		Desktop:                 true,
 	}
 }
 
