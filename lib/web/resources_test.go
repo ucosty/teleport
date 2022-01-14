@@ -332,9 +332,20 @@ version: v2`
 }
 
 type mockedResourceAPIGetter struct {
-	mockGetRole               func(ctx context.Context, name string) (types.Role, error)
-	mockGetRoles              func(ctx context.Context) ([]types.Role, error)
-	mockUpsertRole            func(ctx context.Context, role types.Role) error
+	mockGetRole    func(ctx context.Context, name string) (types.Role, error)
+	mockGetRoles   func(ctx context.Context) ([]types.Role, error)
+	mockUpsertRole func(ctx context.Context, role types.Role) error
+
+	mockUpsertOIDCConnector func(ctx context.Context, connector types.OIDCConnector) error
+	mockGetOIDCConnectors   func(ctx context.Context, withSecrets bool) ([]types.OIDCConnector, error)
+	mockGetOIDCConnector    func(ctx context.Context, id string, withSecrets bool) (types.OIDCConnector, error)
+	mockDeleteOIDCConnector func(ctx context.Context, id string) error
+
+	mockUpsertSAMLConnector func(ctx context.Context, connector types.SAMLConnector) error
+	mockGetSAMLConnectors   func(ctx context.Context, withSecrets bool) ([]types.SAMLConnector, error)
+	mockGetSAMLConnector    func(ctx context.Context, id string, withSecrets bool) (types.SAMLConnector, error)
+	mockDeleteSAMLConnector func(ctx context.Context, id string) error
+
 	mockUpsertGithubConnector func(ctx context.Context, connector types.GithubConnector) error
 	mockGetGithubConnectors   func(ctx context.Context, withSecrets bool) ([]types.GithubConnector, error)
 	mockGetGithubConnector    func(ctx context.Context, id string, withSecrets bool) (types.GithubConnector, error)
@@ -365,6 +376,70 @@ func (m *mockedResourceAPIGetter) UpsertRole(ctx context.Context, role types.Rol
 	}
 
 	return trace.NotImplemented("mockUpsertRole not implemented")
+}
+
+func (m *mockedResourceAPIGetter) UpsertSAMLConnector(ctx context.Context, connector types.SAMLConnector) error {
+	if m.mockUpsertSAMLConnector != nil {
+		return m.mockUpsertSAMLConnector(ctx, connector)
+	}
+
+	return trace.NotImplemented("mockUpsertSAMLConnector not implemented")
+}
+
+func (m *mockedResourceAPIGetter) GetSAMLConnectors(ctx context.Context, withSecrets bool) ([]types.SAMLConnector, error) {
+	if m.mockGetSAMLConnectors != nil {
+		return m.mockGetSAMLConnectors(ctx, false)
+	}
+
+	return nil, trace.NotImplemented("mockGetSAMLConnectors not implemented")
+}
+
+func (m *mockedResourceAPIGetter) GetSAMLConnector(ctx context.Context, id string, withSecrets bool) (types.SAMLConnector, error) {
+	if m.mockGetSAMLConnector != nil {
+		return m.mockGetSAMLConnector(ctx, id, false)
+	}
+
+	return nil, trace.NotImplemented("mockGetSAMLConnector not implemented")
+}
+
+func (m *mockedResourceAPIGetter) DeleteSAMLConnector(ctx context.Context, id string) error {
+	if m.mockDeleteSAMLConnector != nil {
+		return m.mockDeleteSAMLConnector(ctx, id)
+	}
+
+	return trace.NotImplemented("mockDeleteSAMLConnector not implemented")
+}
+
+func (m *mockedResourceAPIGetter) UpsertOIDCConnector(ctx context.Context, connector types.OIDCConnector) error {
+	if m.mockUpsertOIDCConnector != nil {
+		return m.mockUpsertOIDCConnector(ctx, connector)
+	}
+
+	return trace.NotImplemented("mockUpsertOIDCConnector not implemented")
+}
+
+func (m *mockedResourceAPIGetter) GetOIDCConnectors(ctx context.Context, withSecrets bool) ([]types.OIDCConnector, error) {
+	if m.mockGetOIDCConnectors != nil {
+		return m.mockGetOIDCConnectors(ctx, false)
+	}
+
+	return nil, trace.NotImplemented("mockGetOIDCConnectors not implemented")
+}
+
+func (m *mockedResourceAPIGetter) GetOIDCConnector(ctx context.Context, id string, withSecrets bool) (types.OIDCConnector, error) {
+	if m.mockGetOIDCConnector != nil {
+		return m.mockGetOIDCConnector(ctx, id, false)
+	}
+
+	return nil, trace.NotImplemented("mockGetOIDCConnector not implemented")
+}
+
+func (m *mockedResourceAPIGetter) DeleteOIDCConnector(ctx context.Context, id string) error {
+	if m.mockDeleteOIDCConnector != nil {
+		return m.mockDeleteOIDCConnector(ctx, id)
+	}
+
+	return trace.NotImplemented("mockDeleteOIDCConnector not implemented")
 }
 
 func (m *mockedResourceAPIGetter) UpsertGithubConnector(ctx context.Context, connector types.GithubConnector) error {
