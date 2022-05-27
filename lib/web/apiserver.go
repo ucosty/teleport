@@ -411,6 +411,16 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 	h.POST("/webapi/github", h.WithAuth(h.upsertGithubConnectorHandle))
 	h.DELETE("/webapi/github/:name", h.WithAuth(h.deleteGithubConnector))
 
+	h.GET("/webapi/oidc", h.WithAuth(h.getOIDCConnectorsHandle))
+	h.PUT("/webapi/oidc", h.WithAuth(h.upsertOIDCConnectorHandle))
+	h.POST("/webapi/oidc", h.WithAuth(h.upsertOIDCConnectorHandle))
+	h.DELETE("/webapi/oidc/:name", h.WithAuth(h.deleteOIDCConnector))
+
+	h.GET("/webapi/saml", h.WithAuth(h.getSAMLConnectorsHandle))
+	h.PUT("/webapi/saml", h.WithAuth(h.upsertSAMLConnectorHandle))
+	h.POST("/webapi/saml", h.WithAuth(h.upsertSAMLConnectorHandle))
+	h.DELETE("/webapi/saml/:name", h.WithAuth(h.deleteSAMLConnector))
+
 	h.GET("/webapi/trustedcluster", h.WithAuth(h.getTrustedClustersHandle))
 	h.PUT("/webapi/trustedcluster", h.WithAuth(h.upsertTrustedClusterHandle))
 	h.POST("/webapi/trustedcluster", h.WithAuth(h.upsertTrustedClusterHandle))
